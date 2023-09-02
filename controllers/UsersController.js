@@ -1,28 +1,39 @@
+import sha1 from 'sha1';
 import dbClient from '../utils/db';
-import crypto from 'crypto';
+import redisClient from '../utils/redis';
 
 const UsersController = {
-  async postNew (req, res) {
-    const postData = req.body;
-    if (!postData || !postData.email) {
-      return res.status(400).send("Missing email");
+  async postNew(req, res) {
+    const { email, password } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Missing email' });
     }
-    if (!postData.password) {
-      return res.status(400).send("Missing password");
+    if (!password) {
+      return res.status(400).json({ error: 'Missing password' });
     }
-    const users = dbClient.cli.db().collection('users')
-    if ( await users.findOne({ email : postData['email'] })) {
-      return res.status(400).send("Already exist");
+    const users = dbClient.cli.db().collection('users');
+    if (await users.findOne({ email })) {
+      return res.status(400).json({ error: 'Already exists' });
     }
-    const hash = (data) => {
-      const sha1Hash = crypto.createHash('sha1');
-      sha1Hash.update(data);
-      return sha1Hash.digest('hex');
-    };
+    const hashed = sha1(password);
 
-    postData['password'] = hash(postData['password']);
-    const result = await users.insertOne(postData)
-    return res.json({email: postData['email'], id: result.insertedId})
-  }
-}
+    const result = await users.insertOne({ email, password: hashed });
+    return res.status(201).json({ email, id: result.insertedId });
+  },
+  async getMe(req, res) {
+    const auth = req.headers['X-Token'];
+    if (!auth || typeof auth !== 'string') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const user = await redisClient.get(`auth_${auth}`);
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const actualUser = await dbClient.cli.db().collection('users').findOne({ _id: user });
+    if (!actualUser) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    return res.json({ email: actualUser.email, id: actualUser._id });
+  },
+};
 export default UsersController;
