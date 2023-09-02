@@ -6,4 +6,3 @@ export default function Routes(app) {
   app.get('/stats', AppController.getStats);
   app.post('/users/', UsersController.postNew);
 }
-
