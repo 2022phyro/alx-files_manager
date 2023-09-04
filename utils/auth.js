@@ -33,5 +33,23 @@ export async function fromToken(req) {
     .findOne({ _id: new mongoDBCore.BSON.ObjectId(uId) });
   return user || null;
 }
-export default { 'fromAuth': async (req) => fromAuth(req),
-        'fromToken': async (req) => fromToken(req) };
+
+export const middleFromAuth = async (req, res, next) => {
+  const user = await fromAuth(req);
+   if (!user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  req.user = user;
+  next();
+}
+
+export const middleFromToken = async (req, res, next) => {
+  const user = await fromToken(req);
+   if (!user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  req.user = user;
+  next();
+}
