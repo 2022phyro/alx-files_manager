@@ -3,7 +3,7 @@ import sha1 from 'sha1';
 import dbClient from './db';
 import redisClient from './redis';
 
-async function fromAuth(req) {
+export async function fromAuth(req) {
   const auth = req.headers.authorization || null;
   if (!auth) {
     return null;
@@ -19,7 +19,7 @@ async function fromAuth(req) {
   return (user && sha1(password) == user.password) ? user : null;
 }
 
-async function fromToken(req) {
+export async function fromToken(req) {
   const auth = req.headers['x-token'];
 
   if (!auth) {
@@ -33,4 +33,4 @@ async function fromToken(req) {
     .findOne({ _id: new mongoDBCore.BSON.ObjectId(uId) });
   return user || null;
 }
-export default { fromAuth, fromToken };
+export default { 'fromAuth': fromAuth, 'fromToken': fromToken };

@@ -21,4 +21,5 @@ const AuthController = {
     await redisClient.del(`auth_${auth}`);
     return res.status(204).send();
   }
+}
 export default AuthController;
