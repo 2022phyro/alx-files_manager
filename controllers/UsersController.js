@@ -25,19 +25,8 @@ const UsersController = {
   },
 
   async getMe(req, res) {
-    const auth = req.headers['X-Token'];
-    if (!auth || typeof auth !== 'string') {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    const user = await redisClient.get(`auth_${auth}`);
-    if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    const actualUser = await dbClient.cli.db().collection('users').findOne({ _id: user });
-    if (!actualUser) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    return res.json({ email: actualUser.email, id: actualUser._id });
+    const { user }  = req;
+    return res.status(200).json({ email: user.email, id: user._id.toString() });
   },
 
 };
