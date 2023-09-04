@@ -2,10 +2,12 @@ import sha1 from 'sha1';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
-export class UsersController = {
-  static async postNew(req, res) {
+const UsersController = {
+  async postNew(req, res) {
     const email = req.body ? req.body.email : null;
+    console.log(email);
     const password = req.body ? req.body.password : null;
+    console.log(password);
     if (!email) {
       return res.status(400).json({ error: 'Missing email' });
     }
@@ -21,8 +23,8 @@ export class UsersController = {
     const result = await users.insertOne({ email, password: hashed });
     return res.status(201).json({ email, id: result.insertedId.toString() });
   },
-/*
-  static sync getMe(req, res) {
+
+  async getMe(req, res) {
     const auth = req.headers['X-Token'];
     if (!auth || typeof auth !== 'string') {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -37,6 +39,6 @@ export class UsersController = {
     }
     return res.json({ email: actualUser.email, id: actualUser._id });
   },
-*/
+
 };
 export default UsersController;
