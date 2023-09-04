@@ -4,6 +4,7 @@ import redisClient from '../utils/redis';
 const AuthController = {
   async getConnect(req, res) {
     const { user } = req;
+    console.log(user._id)
     if (!user) {
       return res.status(401).json({"error":"Unauthorized"})
     }

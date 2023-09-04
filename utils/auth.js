@@ -33,4 +33,5 @@ export async function fromToken(req) {
     .findOne({ _id: new mongoDBCore.BSON.ObjectId(uId) });
   return user || null;
 }
-export default { 'fromAuth': fromAuth, 'fromToken': fromToken };
+export default { 'fromAuth': async (req) => fromAuth(req),
+        'fromToken': async (req) => fromToken(req) };
