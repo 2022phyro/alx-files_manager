@@ -13,10 +13,10 @@ export async function fromAuth(req) {
     return null;
   }
   const val = Buffer.from(parts[1], 'base64').toString('utf-8');
-  const [email, ...rest] = val.split(":")
-  const password = rest.join(":")
-  const users = await dbClient.cli.db().collection('users').findOne({ email });
-  return (user && sha1(password) == user.password) ? user : null;
+  const [email, ...rest] = val.split(':');
+  const password = rest.join(':');
+  const user = await dbClient.cli.db().collection('users').findOne({ email });
+  return (!user || sha1(password) !== user.password) ? null : user;
 }
 
 export async function fromToken(req) {
@@ -25,7 +25,7 @@ export async function fromToken(req) {
   if (!auth) {
     return null;
   }
-  const uId = await redisClient.get(`auth_${auth}`)
+  const uId = await redisClient.get(`auth_${auth}`);
   if (!uId) {
     return null;
   }
@@ -36,20 +36,20 @@ export async function fromToken(req) {
 
 export const middleFromAuth = async (req, res, next) => {
   const user = await fromAuth(req);
-   if (!user) {
+  if (!user) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
   req.user = user;
   next();
-}
+};
 
 export const middleFromToken = async (req, res, next) => {
   const user = await fromToken(req);
-   if (!user) {
+  if (!user) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
   req.user = user;
   next();
-}
+};
