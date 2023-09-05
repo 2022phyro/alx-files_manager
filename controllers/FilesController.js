@@ -7,6 +7,14 @@ import { tmpdir } from 'os';
 import { ObjectId } from 'mongodb';
 
 const notId = Buffer.alloc(24, '0').toString('utf-8');
+const convert = (id) => {
+  try {
+    const ru = new mongoDBCore.BSON.ObjectId(id)
+    return ru
+  } catch {
+    return  'not'
+  }
+}
 
 const FilesController = {
   async postUpload(req, res) {
@@ -23,17 +31,21 @@ const FilesController = {
     if (!name) {
       return res.status(400).json({"error": "Missing name"});
     }
-    if (!type || !fTypes.includes(type)) {
+    if (!fTypes.includes(type)) {
       return res.status(400).json({"error": "Missing type"});
-    }AOA
+    }
 
     if (!req.body.data && type  !== 'folder') {
       return res.status(400).json({"error": "Missing data"});
     }
 
     let pId = 0;
-    if (parentId && parentId !== 0) {
-       pId = ObjectId.isValid(parentId) ? new ObjectId(parentId) : pId;
+    if (parentId && parentId !== 0 && parentId != pId.toString()) {
+      pId = convert(parentId);
+      if (pId === 'not') {
+        return res.status(400).json({"error": "Parent not found"});
+      }
+
       const par = await dbClient.cli.db().collection('files').findOne({ _id: pId });
       if (!par) {
         return res.status(400).json({"error": "Parent not found"});
