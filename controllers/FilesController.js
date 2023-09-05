@@ -20,7 +20,7 @@ const FilesController = {
   async postUpload(req, res) {
     const { user } = req;
     const name = req.body ? req.body.name : null;
-    const type = req.body ? req.body.type : null;
+    const type = req.body ? req.body.type : 'none';
     const parentId = req.body && req.body.parentId ? req.body.parentId : 0;
     const isPublic =  req.body && req.body.isPublic ? req.body.isPublic : false;
     const data = req.body ? req.body.data : "";
@@ -88,7 +88,7 @@ const FilesController = {
     const { user } = req
     const fileId = req.params ? req.params.id : notId
     const file = await dbClient.cli.db().collection('files').findOne({
-       _id: new mongoDBCore.BSON.ObjectId(ObjectId.isValid(fileId) ? fileId : notId) ,
+       _id: convert(fileId)) ,
       userId: user._id
     });
     if (!file) {
@@ -114,7 +114,7 @@ const FilesController = {
         $match: {
           userId: user._id,
           parentId: pId === rootFolder.tostring() ? 
-            pId : new mongoDBCore.BSON.ObjectId(ObjectId.isValid(pId) ? pId : notId),
+            pId : convert(pId),
         }
       },
       { $sort: { _id: -1 } },
