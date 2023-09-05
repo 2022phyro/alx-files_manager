@@ -3,7 +3,7 @@ import path from 'path';
 import mongoDBCore from 'mongodb/lib/core';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
-
+import { tmpdir } from 'os';
 const FilesController = {
   async postUpload(req, res) {
     const { user } = req;
@@ -13,20 +13,22 @@ const FilesController = {
     const isPublic =  req.body && req.body.ispPublic ? req.body.isPublic : false;
     const data = req.body ? req.body.data : "";
     const fTypes = ['folder', 'file', 'image'];
-    const root = process.env.FOLDER_PATH || '/tmp/files_manager';
+    const root = `${process.env.FOLDER_PATH || ''}`.trim().length > 0
+      ? process.env.FOLDER_PATH.trim()
+      : path.join(tmpdir(), 'files_manager');
     if (!name) {
       return res.status(400).json({"error": "Missing name"});
     }
-    if (!fTypes.includes(type)) {
+    if (!type || !fTypes.includes(type)) {
       return res.status(400).json({"error": "Missing type"});
     }
 
-    if (!data && type  !== 'folder') {
+    if (!req.body.data && type  !== 'folder') {
       return res.status(400).json({"error": "Missing data"});
     }
 
     let pId = 0;
-    if (parentId && parentId !== 0) {
+    if (parentId && parentId !== 0 && parentId != pId.toString()) {
       pId = new  mongoDBCore.BSON.ObjectId(parentId);
       const par = await dbClient.cli.db().collection('files').findOne({ _id: pId });
       if (!par) {
