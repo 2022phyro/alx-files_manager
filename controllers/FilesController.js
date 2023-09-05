@@ -10,11 +10,12 @@ const notId = Buffer.alloc(24, '0').toString('utf-8');
 const convert = (id) => {
   try {
     const ru = new mongoDBCore.BSON.ObjectId(id)
-    return ru
+    return ru;
   } catch {
-    return  'not'
+     const err = new mongoDBCore.BSON.ObjectId(notId)
+     return err;
   }
-}
+};
 
 const FilesController = {
   async postUpload(req, res) {
@@ -42,10 +43,6 @@ const FilesController = {
     let pId = 0;
     if (parentId && parentId !== 0 && parentId != pId.toString()) {
       pId = convert(parentId);
-      if (pId === 'not') {
-        return res.status(400).json({"error": "Parent not found"});
-      }
-
       const par = await dbClient.cli.db().collection('files').findOne({ _id: pId });
       if (!par) {
         return res.status(400).json({"error": "Parent not found"});
@@ -88,7 +85,7 @@ const FilesController = {
     const { user } = req
     const fileId = req.params ? req.params.id : notId
     const file = await dbClient.cli.db().collection('files').findOne({
-       _id: convert(fileId)) ,
+       _id: convert(fileId),
       userId: user._id
     });
     if (!file) {
@@ -103,6 +100,54 @@ const FilesController = {
       parentId: file.parentId.toString(),
     });
   },
+  async putPublish(req, res) {
+    const { user } = req;
+    const fileId = req.params.id;
+    const filter = {
+       _id: convert(fileId),
+      userId: user._id
+    }
+    
+    const file = await dbClient.cli.db().collection('files').findOne(filter);
+    if (!file) {
+      return res.status(404).json({"error": "Not found"});
+    }
+    await dbClient.cli.db().collection('files')
+      .updateOne(filter, { $set: { isPublic: true } });
+    res.status(200).json({
+      id: file._id.toString()
+      userId: file.userId.toString()
+      name: file.name,
+      type: file.type,
+      isPublic: true,
+      parentId: file.parentId.toString(),
+    });
+  },
+  
+  async putUnpublish(req, res) {
+    const { user } = req;
+    const fileId = req.params.id;
+    const filter = {
+       _id: convert(fileId),
+      userId: user._id
+    }
+
+    const file = await dbClient.cli.db().collection('files').findOne(filter);
+    if (!file) {
+      return res.status(404).json({"error": "Not found"});
+    }
+    await dbClient.cli.db().collection('files')
+      .updateOne(filter, { $set: { isPublic: false } });
+    res.status(200).json({
+      id: file._id.toString()
+      userId: file.userId.toString()
+      name: file.name,
+      type: file.type,
+      isPublic: false,
+      parentId: file.parentId.toString(),
+    });
+  },
+    
   async getIndex(req, res) {
     const { user } = req;
     const rootFolder = 0
@@ -113,7 +158,7 @@ const FilesController = {
       {
         $match: {
           userId: user._id,
-          parentId: pId === rootFolder.tostring() ? 
+          parentId: pId === rootFolder.toString() ? 
             pId : convert(pId),
         }
       },
@@ -133,7 +178,7 @@ const FilesController = {
             type: '$type',
             isPublic: '$isPublic',
             parentId: {
-              $cond: { if: { $eq: ['$parentId', '0'] }, then: 0, else: '$parentId' },
+              $cond: { if: { $eq: ['$parentId', 0] }, then: 0, else: '$parentId' },
             },
           },
         },
