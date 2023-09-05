@@ -6,8 +6,11 @@ import fs from 'fs';
 import { tmpdir } from 'os';
 import { ObjectId } from 'mongodb';
 
-const notId = Buffer.alloc(24, '0').toString('utf-8');
 const convert = (id) => {
+  const notId = Buffer.alloc(24, '0').toString('utf-8');
+  if (id === 0 || id.toString() === '0') {
+    return 0;
+  }
   try {
     const ru = new mongoDBCore.BSON.ObjectId(id)
     return ru;
@@ -83,7 +86,7 @@ const FilesController = {
   },
     async getShow(req, res) {
     const { user } = req
-    const fileId = req.params ? req.params.id : notId
+    const fileId = req.params.id
     const file = await dbClient.cli.db().collection('files').findOne({
        _id: convert(fileId),
       userId: user._id
@@ -102,7 +105,7 @@ const FilesController = {
   },
   async putPublish(req, res) {
     const { user } = req;
-    const fileId = req.params ? req.params.id : notId    
+    const fileId = req.params.id;
     const filter = {
        _id: convert(fileId),
       userId: user._id
@@ -126,7 +129,7 @@ const FilesController = {
   
   async putUnpublish(req, res) {
     const { user } = req;
-    const fileId = req.params ? req.params.id : notId
+    const fileId = req.params.id
     const filter = {
        _id: convert(fileId),
       userId: user._id
@@ -157,8 +160,7 @@ const FilesController = {
       {
         $match: {
           userId: user._id,
-          parentId: pId === 0 ? 
-            0 : convert(pId),
+          parentId: convert(pId),
         }
       },
       { $sort: { _id: -1 } },
@@ -177,9 +179,8 @@ const FilesController = {
             type: '$type',
             isPublic: '$isPublic',
             parentId: '$parentId' ,
-            },
-          },
-        },
+         },
+       },
     ]
     const docs = await dbClient.cli.db().collection('files').aggregate(pipe).toArray();
 
