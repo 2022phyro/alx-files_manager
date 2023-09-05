@@ -104,20 +104,20 @@ const FilesController = {
     });
   },
   async putPublish(req, res) {
-    const { user } = req;
-    const fileId = req.params.id;
+    const { user } = req
+    const fileId = req.params.id
     const filter = {
-       _id: convert(fileId),
+      _id: convert(fileId),
       userId: user._id
     }
-    
     const file = await dbClient.cli.db().collection('files').findOne(filter);
+
     if (!file) {
       return res.status(404).json({"error": "Not found"});
     }
     await dbClient.cli.db().collection('files')
       .updateOne(filter, { $set: { isPublic: true } });
-    res.status(200).json({
+    return res.json({
       id: file._id.toString(),
       userId: file.userId.toString(),
       name: file.name,
@@ -125,31 +125,32 @@ const FilesController = {
       isPublic: true,
       parentId: file.parentId.toString(),
     });
+
   },
   
   async putUnpublish(req, res) {
-    const { user } = req;
+    const { user } = req
     const fileId = req.params.id
     const filter = {
-       _id: convert(fileId),
+      _id: convert(fileId),
       userId: user._id
     }
-
     const file = await dbClient.cli.db().collection('files').findOne(filter);
     if (!file) {
       return res.status(404).json({"error": "Not found"});
     }
+    
     await dbClient.cli.db().collection('files')
       .updateOne(filter, { $set: { isPublic: false } });
-    res.status(200).json({
+    return res.json({
       id: file._id.toString(),
       userId: file.userId.toString(),
       name: file.name,
       type: file.type,
       isPublic: false,
       parentId: file.parentId.toString(),
-    });
-  },
+    });  
+},
     
   async getIndex(req, res) {
     const { user } = req;
