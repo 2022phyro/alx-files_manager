@@ -1,5 +1,7 @@
 import { MongoClient } from 'mongodb';
-
+/**
+* - class DBClient is our handler for the database
+ */
 class DBClient {
   constructor() {
     const host = process.env.DB_HOST || 'localhost';
@@ -19,6 +21,14 @@ class DBClient {
 
   async nbFiles() {
     return this.cli.db().collection('files').countDocuments();
+  }
+
+  async files() {
+    return this.cli.db().collection('files');
+  }
+
+  async users() {
+    return this.cli.db().collection('users');
   }
 }
 

@@ -14,7 +14,7 @@ const UsersController = {
     if (!password) {
       return res.status(400).json({ error: 'Missing password' });
     }
-    const users = dbClient.cli.db().collection('users');
+    const users = await dbClient.users;
     if (await users.findOne({ email })) {
       return res.status(400).json({ error: 'Already exist' });
     }
