@@ -16,4 +16,5 @@ export default function Routes(app) {
   app.put('/files/:id/publish', middleFromToken, FilesController.putPublish);
   app.put('/files/:id/unpublish', middleFromToken, FilesController.putUnpublish);
   app.get('/files', middleFromToken, FilesController.getIndex);
+  app.get('/files/:id/data', middleFromToken, FilesController.getFile);
 }

@@ -1,3 +1,4 @@
+import mime from 'mime-types';
 import dbClient from '../utils/db';
 import path from 'path';
 import mongoDBCore from 'mongodb/lib/core';
@@ -186,6 +187,29 @@ const FilesController = {
     const docs = await dbClient.cli.db().collection('files').aggregate(pipe).toArray();
 
     return res.json(docs);
+  },
+  async getFile(req, res) {
+    const { user } = req
+    const fileId = req.params.id
+    const filter = {
+      _id: convert(fileId),
+      userId: user._id
+    }
+    const file = await dbClient.cli.db().collection('files').findOne(filter);
+    if (!file || !file.isPublic) {
+      return res.status(404).json({"error": "Not found"});
+    }
+    if (file.type === "folder") {
+      return res.status(400).json({"error": "A folder doesn't have content"});
+    }
+    try {
+      const val = await fs.promises.readFileAsync(file.localPath)
+      const type = mime.contentType(file.name) || 'text/plain; charset=utf-8';
+      res.setHeader('Content-Type', type)
+      res.status(200).sendFile(val);
+     } catch (error) {
+        return res.status(404).json({"error": "Not found"});
+     };
   }
 }
 export default FilesController;
