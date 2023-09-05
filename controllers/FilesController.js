@@ -102,7 +102,7 @@ const FilesController = {
   },
   async putPublish(req, res) {
     const { user } = req;
-    const fileId = req.params.id;
+    const fileId = req.params ? req.params.id : notId    
     const filter = {
        _id: convert(fileId),
       userId: user._id
@@ -126,7 +126,7 @@ const FilesController = {
   
   async putUnpublish(req, res) {
     const { user } = req;
-    const fileId = req.params.id;
+    const fileId = req.params ? req.params.id : notId
     const filter = {
        _id: convert(fileId),
       userId: user._id
@@ -150,16 +150,15 @@ const FilesController = {
     
   async getIndex(req, res) {
     const { user } = req;
-    const rootFolder = 0
-    const pId = req.query ? req.query.parentId : rootFolder.toString();
+    const pId = req.query.parentId || 0 ;
     const pageSize = 20;
     const page = parseInt(req.query.page, 10) || 0;
     const pipe = [
       {
         $match: {
           userId: user._id,
-          parentId: pId === rootFolder.toString() ? 
-            pId : convert(pId),
+          parentId: pId === 0 ? 
+            0 : convert(pId),
         }
       },
       { $sort: { _id: -1 } },
@@ -177,8 +176,7 @@ const FilesController = {
             name: '$name',
             type: '$type',
             isPublic: '$isPublic',
-            parentId: {
-              $cond: { if: { $eq: ['$parentId', 0] }, then: 0, else: '$parentId' },
+            parentId: '$parentId' ,
             },
           },
         },
