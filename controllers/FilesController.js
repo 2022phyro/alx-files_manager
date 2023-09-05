@@ -71,7 +71,7 @@ const FilesController = {
         'id': result.insertedId.toString(), 'userId': user._id.toString(),
         'isPublic': isPublic
     });
-  }
+  },
     async getShow(req, res) {
     const { user } = req
     const fileId = req.params ? req.params.id : notId
