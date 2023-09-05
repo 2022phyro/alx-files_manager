@@ -7,11 +7,11 @@ import fs from 'fs';
 const FilesController = {
   async postUpload(req, res) {
     const { user } = req;
-    const name = req.body.name || null;
-    const type = req.body.type || 'none';
-    const parentId = req.body.parentId || 0
-    const isPublic = req.body.isPublic || false;
-    const data = req.body.data || null;
+    const name = req.body ? req.body.name : null;
+    const type = req.body ? req.body.type : null;
+    const parentId = req.body && req.body.parentId ? req.body.parentId : 0;
+    const isPublic =  req.body && req.body.ispPublic ? req.body.isPublic : false;
+    const data = req.body ? req.body.data : "";
     const fTypes = ['folder', 'file', 'image'];
     const root = process.env.FOLDER_PATH || '/tmp/files_manager';
     if (!name) {
