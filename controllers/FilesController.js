@@ -1,11 +1,14 @@
 import mime from 'mime-types';
 import path from 'path';
 import mongoDBCore from 'mongodb/lib/core';
+import Queue from 'bull/lib/queue';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import { tmpdir } from 'os';
 import dbClient from '../utils/db';
+import { fromToken } from '../utils/auth';
 
+const fileQueue = new Queue('thumbnail generation');
 const convert = (id) => {
   const notId = Buffer.alloc(24, '0').toString('utf-8');
   if (id === 0 || id.toString() === '0') {
@@ -82,6 +85,12 @@ const FilesController = {
     await fs.promises.writeFile(filePath, decoded);
     doc.localPath = filePath;
     const result = await (await dbClient.files()).insertOne(doc);
+    if (type === 'image') {
+      const userId = user._id.toString();
+      const fileId = result.insertedId.toString();
+      const jobName = `Image thumbnail [${userId}-${fileId}]`;
+      fileQueue.add({ userId, fileId, name: jobName });
+    }
     return res.status(201).json({
       name,
       type,
@@ -194,8 +203,9 @@ const FilesController = {
     return res.json(docs);
   },
   async getFile(req, res) {
-    const { user } = req;
+    const user = await fromToken(req);
     const fileId = req.params.id;
+    const size = req.query.size || null;
     const filter = {
       _id: convert(fileId),
       userId: user._id,
@@ -207,8 +217,10 @@ const FilesController = {
     if (file.type === 'folder') {
       return res.status(400).json({ error: "A folder doesn't have content" });
     }
-    const filePath = file.localPath;
-    // logic for size
+    let filePath = file.localPath;
+    if (size) {
+      filePath = `${file.localPath}_${size}`;
+    }
     if (fs.existsSync(filePath)) {
       const fInfo = await fs.promises.stat(filePath);
       if (!fInfo.isFile()) {
@@ -218,7 +230,9 @@ const FilesController = {
       return res.status(404).json({ error: 'Not found' });
     }
     const absFile = await fs.promises.realpath(filePath);
+    // console.log(file.name, file.type);
     const type = mime.contentType(file.name) || 'text/plain; charset=utf-8';
+    // console.log(type);
     res.setHeader('Content-Type', type);
     return res.status(200).sendFile(absFile);
   },
