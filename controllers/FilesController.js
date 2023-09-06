@@ -47,7 +47,7 @@ const FilesController = {
     let pId = 0;
     if (parentId && parentId !== 0 && parentId != pId.toString()) {
       pId = convert(parentId);
-      const par = await (await dbClient.files).findOne({ _id: pId });
+      const par = await (await dbClient.files()).findOne({ _id: pId });
       if (!par) {
         return res.status(400).json({"error": "Parent not found"});
       }
@@ -62,7 +62,7 @@ const FilesController = {
         'isPublic': isPublic
     }
     if (type === 'folder') {
-      const result = await (await dbClient.files).insertOne(doc);
+      const result = await (await dbClient.files()).insertOne(doc);
       return res.status(201).json({
         'name': name, 'type': type, 'parentId': pId.toString(),
         'id': result.insertedId.toString(), 'userId': user._id.toString(),
@@ -78,7 +78,7 @@ const FilesController = {
     const decoded = Buffer.from(data, 'base64');
     await fs.promises.writeFile(filePath, decoded);
     doc.localPath = filePath;
-    const result = await (await dbClient.files).insertOne(doc);
+    const result = await (await dbClient.files()).insertOne(doc);
     return res.status(201).json({
         'name': name, 'type': type, 'parentId': pId.toString(),
         'id': result.insertedId.toString(), 'userId': user._id.toString(),
@@ -88,7 +88,7 @@ const FilesController = {
     async getShow(req, res) {
     const { user } = req
     const fileId = req.params.id
-    const file = await (await dbClient.files).findOne({
+    const file = await (await dbClient.files()).findOne({
        _id: convert(fileId),
       userId: user._id
     });
@@ -111,12 +111,12 @@ const FilesController = {
       _id: convert(fileId),
       userId: user._id
     }
-    const file = await (await dbClient.files).findOne(filter);
+    const file = await (await dbClient.files()).findOne(filter);
 
     if (!file) {
       return res.status(404).json({"error": "Not found"});
     }
-    await (await dbClient.files)
+    await (await dbClient.files())
       .updateOne(filter, { $set: { isPublic: true } });
     return res.json({
       id: file._id.toString(),
@@ -136,12 +136,12 @@ const FilesController = {
       _id: convert(fileId),
       userId: user._id
     }
-    const file = await (await dbClient.files).findOne(filter);
+    const file = await (await dbClient.files()).findOne(filter);
     if (!file) {
       return res.status(404).json({"error": "Not found"});
     }
     
-    await (await dbClient.files)
+    await (await dbClient.files())
       .updateOne(filter, { $set: { isPublic: false } });
     return res.json({
       id: file._id.toString(),
@@ -184,7 +184,7 @@ const FilesController = {
          },
        },
     ]
-    const docs = await (await dbClient.files).aggregate(pipe).toArray();
+    const docs = await (await dbClient.files()).aggregate(pipe).toArray();
 
     return res.json(docs);
   },
@@ -195,7 +195,7 @@ const FilesController = {
       _id: convert(fileId),
       userId: user._id
     }
-    const file = await (await dbClient.files).findOne(filter);
+    const file = await (await dbClient.files()).findOne(filter);
     if (!file || !file.isPublic) {
       return res.status(404).json({"error": "Not found"});
     }
