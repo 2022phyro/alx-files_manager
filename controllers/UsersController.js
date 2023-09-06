@@ -1,20 +1,17 @@
 import sha1 from 'sha1';
 import dbClient from '../utils/db';
-import redisClient from '../utils/redis';
 
 const UsersController = {
   async postNew(req, res) {
     const email = req.body ? req.body.email : null;
-    console.log(email);
     const password = req.body ? req.body.password : null;
-    console.log(password);
     if (!email) {
       return res.status(400).json({ error: 'Missing email' });
     }
     if (!password) {
       return res.status(400).json({ error: 'Missing password' });
     }
-    const users = await dbClient.users;
+    const users = await dbClient.users();
     if (await users.findOne({ email })) {
       return res.status(400).json({ error: 'Already exist' });
     }
@@ -25,7 +22,7 @@ const UsersController = {
   },
 
   async getMe(req, res) {
-    const { user }  = req;
+    const { user } = req;
     return res.status(200).json({ email: user.email, id: user._id.toString() });
   },
 

@@ -4,7 +4,6 @@ import redisClient from '../utils/redis';
 const AuthController = {
   async getConnect(req, res) {
     const { user } = req;
-    console.log(user._id);
     const key = uuidv4();
     await redisClient.set(`auth_${key}`, user._id.toString(), 86400);
     return res.status(200).json({ token: key.toString() });
