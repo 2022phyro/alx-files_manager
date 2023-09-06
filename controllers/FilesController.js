@@ -202,14 +202,20 @@ const FilesController = {
     if (file.type === "folder") {
       return res.status(400).json({"error": "A folder doesn't have content"});
     }
-    try {
-      const val = await fs.promises.readFile(file.localPath)
-      const type = mime.contentType(file.name) || 'text/plain; charset=utf-8';
-      res.setHeader('Content-Type', type)
-      res.status(200).sendFile(val);
-     } catch (error) {
-        return res.status(404).json({"error": "Not found"});
-     };
+    let filePath = file.localPath;
+    // logic for size
+    if (fs.existsSync(filePath)) {
+      const fInfo = await fs.promises.stat(filePath);
+      if (!fInfo.isFile()) {
+       return res.status(404).json({"error": "Not found"});
+      }
+    } else {
+      return res.status(404).json({"error": "Not found"});
+    }
+    const absFile = await fs.promises.realpath(filePath);
+    const type = mime.contentType(file.name) || 'text/plain; charset=utf-8';
+    res.setHeader('Content-Type', type);
+    res.status(200).sendFile(absFile);
   }
 }
 export default FilesController;
